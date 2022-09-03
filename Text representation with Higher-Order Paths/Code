@@ -1,0 +1,305 @@
+/*
+AHMET HAMZA DEMİR
+150116025
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <locale.h>
+#include <string.h>
+#include <math.h>
+
+struct MLL{
+	
+	char word[13];
+	int txtFileNumber;
+	int fileTitle;
+	int frequency;
+	int findMax;
+	int exist;              //for keep how many text file has this word
+	
+	struct MLL* next;
+	
+};
+
+typedef struct MLL MLL;
+MLL *header;
+
+struct LL{
+	
+	char word1[13];
+	char word2[13];
+	int occu;
+	
+	struct LL* next;
+};
+
+typedef struct LL LL;
+LL *hdr;
+
+int readFile(char fileName[], int i, int x){
+	
+	FILE *fp;
+	
+	fp = fopen(fileName, "r");
+	
+	char word[13];
+	
+	while(fscanf(fp,"%s",word)==1){
+		
+		insertMLL(&header,word, i, x);
+	
+	}
+	
+}
+
+int print(MLL* node){
+	
+	while(node != NULL){
+		
+		printf(" %s  %d %d", node->word, node->frequency, node->exist);
+		node=node->next;
+	
+	}
+	
+}
+
+int printI(LL* node){
+	
+	printf("\n\n1st order ");
+	
+	while(node != NULL){
+		if(node->occu==1)
+			printf(" {%s, %s} ", node->word1, node->word2);
+		node=node->next;
+	}
+	node=hdr;	
+	printf("\n\n2nd order ");
+	
+	while(node != NULL){
+		if(node->occu==2)
+			printf(" {%s, %s} ", node->word1, node->word2);
+		node=node->next;
+	}
+	node=hdr;
+	printf("\n\n3rd order ");
+	
+	while(node != NULL){
+		if(node->occu==3)
+			printf(" {%s, %s} ", node->word1, node->word2);
+		node=node->next;
+	}
+}
+
+int insertMLL(struct MLL **header, char word[], int i, int x){
+	
+	struct MLL* newNode = (struct MLL*)malloc(sizeof(struct MLL));             
+	struct MLL *lastNode = *header;                                            
+	
+	strcpy(newNode->word,word);
+	newNode->txtFileNumber = i;
+	newNode->fileTitle = x;
+	newNode->frequency = 1;
+	newNode->findMax=0;
+	newNode->exist=1;
+	
+	MLL *control;
+	control=*header;
+	
+	int j;
+	
+	while(control != NULL){
+		
+		j=strcmp(word,control->word);
+		
+		if(j==0){
+			control->frequency++;
+			if(newNode->fileTitle != control->fileTitle)						//if they are in different text file, int exist++
+				control->exist++;
+		}
+			
+		control=control->next;
+		
+	}
+	
+	newNode->next = NULL;
+	
+	if(*header == NULL){  
+	
+		*header = newNode;
+		return;
+	
+	}
+	
+	while(lastNode->next != NULL) 
+		lastNode = lastNode->next;
+	lastNode->next = newNode;
+	return;
+	
+}
+
+int preInsertLL(struct MLL* header){
+	MLL *current, *control;
+	current = header;
+	while (current != NULL){	
+		control = current->next;
+		char currentWord[13];
+		char nextWord[13];
+		
+		strcpy(currentWord, current->word);
+		int currentTxtFileNumber = current->txtFileNumber;
+		int currentFileTitle = current->fileTitle;
+		
+		int nextTxtFileNumber;
+		int nextFileTitle;
+		current = current->next;
+				
+		while(control != NULL){
+				
+				strcpy(nextWord, control->word);
+				nextTxtFileNumber = control->txtFileNumber;
+				nextFileTitle = control->fileTitle;
+							
+				if (currentTxtFileNumber == nextTxtFileNumber && currentFileTitle == nextFileTitle){
+					
+					insertLL(&hdr, currentWord, nextWord, 1);
+					
+				}
+				else if(currentTxtFileNumber - nextTxtFileNumber == -1 || currentTxtFileNumber - nextTxtFileNumber == 1 ){
+				
+					if(currentFileTitle == nextFileTitle){
+						insertLL(&hdr, currentWord, nextWord, 2);
+					}
+					
+					else{
+						insertLL(&hdr, currentWord, nextWord, 3);
+					}
+						
+				}
+				else{
+					
+					insertLL(&hdr, currentWord, nextWord, 3);
+					
+				}
+				
+			control = control->next;
+		}
+	}
+}
+
+int insertLL(struct LL **hdr, char word1[], char word2[], int occu){
+
+	struct LL* newNode = (struct LL*)malloc(sizeof(struct LL));             
+	struct LL *lastNode = *hdr;                                             
+	
+	strcpy(newNode->word1,word1);
+	strcpy(newNode->word2,word2);
+	newNode->occu = occu;
+	
+	newNode->next = NULL;
+	
+	if(*hdr == NULL){                                                      
+	
+		*hdr = newNode;
+		return;
+	
+	}
+	
+	while(lastNode->next != NULL)                                      
+		lastNode = lastNode->next;
+	
+	lastNode->next = newNode;
+	return;
+	
+}
+
+int rank(struct MLL* node){
+	
+	MLL *current, *control;
+	int max;
+	char currentWord[13];
+	char controlWord[13];
+	
+	current = node;
+	control = current;
+	int cat;
+	
+	while(current != NULL){
+		
+		strcpy(currentWord, current->word);
+		max=current->frequency;
+		
+		while(control != NULL){
+			int controlFre;
+			controlFre = control->frequency;
+			
+			cat=control->fileTitle;
+			
+			if(max<controlFre && control->findMax == 0){
+				
+				strcpy(controlWord, control->word);
+				
+				if(cat==1)
+					printf("\n econ\n -------");
+				else if(cat==2)
+					printf("\n health\n -------");
+				else
+					printf("\n magazin\n -------");
+					
+				int IDF;
+				IDF=log(3/control->exist);
+				
+				printf("\nword; frequency, IDF\n%s; %d, %d", control->word, control->frequency, IDF);
+				control->findMax = 1;
+				max=controlFre;
+			}
+			control=control->next;
+		}
+		current=current->next;
+	}			
+}
+
+int main(){
+	
+	int input;
+		
+	setlocale(LC_ALL,"turkish");
+	
+	char fileNameEcon[25]="dataset3/econ/0.txt";
+	char fileNameHealth[25]="dataset3/health/0.txt";
+	char fileNameMagazin[25]="dataset3/magazin/0.txt";
+	
+	int i;
+	
+	for(i=1;i<10;i++){
+		char c = i + '0';
+		fileNameEcon[14]=c;
+		readFile(fileNameEcon,i,1);
+	}
+	
+	for(i=1;i<10;i++){
+		char c = i + '0';
+		fileNameHealth[16]=c;
+		readFile(fileNameHealth,i,2);
+	}
+	
+	for(i=1;i<10;i++){
+		char c = i + '0';
+		fileNameMagazin[17]=c;
+		readFile(fileNameMagazin,i,3);
+	}
+	
+	preInsertLL(header);
+	
+	printf("  1 for all words \n  2 for occurrence \n  3 for most repeated word  \n\n  ");
+	scanf("%d", &input);
+	
+	if(input == 1)
+		print(header);
+	else if(input == 2)
+		printI(hdr);
+	else if(input == 3)
+		rank(header);
+	else
+		printf("invalid input");
+}
